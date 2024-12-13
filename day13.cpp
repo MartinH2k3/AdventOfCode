@@ -47,7 +47,19 @@ point get_from_line(std::string line, const bool is_prize = false) {
 
 
 int64_t machine_cost(const claw_machine& machine) {
-    // test data doesn't contain parallel lines, so I didn't program them as we would need to approach it differently
+    // same direction or one of them is 0,0
+    if (machine.b.x*machine.a.y - machine.b.y*machine.a.x == 0) {
+        // use only b
+        if (machine.prize.x % machine.b.x == 0 && machine.prize.y % machine.b.y == 0) {
+            return machine.prize.x/machine.b.x;
+        }
+        // use only a
+        if (machine.prize.x % machine.a.x == 0 && machine.prize.y % machine.a.y == 0) {
+            return machine.prize.x/machine.a.x*3;
+        }
+        // we are not checking combinations, as I can't do it in acceptable time
+        return -1;
+    }
     int64_t a_count = (machine.b.x*machine.prize.y - machine.b.y*machine.prize.x)/machine.b.x*machine.a.y - machine.b.y*machine.a.x;
     int64_t b_count;
     if (machine.b.x) {
