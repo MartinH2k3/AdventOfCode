@@ -36,6 +36,7 @@ struct Point {
     bool within(const int width, const int height) const {
         return x >= 0 && x < width && y >= 0 && y < height;
     }
+    std::vector<Point> neighbors(int width, int height) const;
 };
 inline std::ostream& operator<<(std::ostream& os, const Point& p) {
     os << "(" << p.x << ", " << p.y << ")";
@@ -112,4 +113,50 @@ inline std::ostream& operator<<(std::ostream& os, const Direction dir) {
     return os;
 }
 
+inline std::vector<Point> Point::neighbors(const int width, const int height) const {
+    std::vector<Point> neighbors;
+    for (const auto& dir : directions | std::views::values) {
+        if (Point neighbor = *this + dir;
+            neighbor.within(width, height)) {
+            neighbors.push_back(neighbor);
+        }
+    }
+    return neighbors;
+}
+
+inline int power(int base, int exp) {
+    int result = 1;
+    while (exp) {
+        if (exp & 1) {
+            result *= base;
+        }
+        exp >>= 1;
+        base *= base;
+    }
+    return result;
+}
+
+template <typename T>
+std::vector<T> split(std::string input, const char delimiter) {
+    std::ranges::replace(input.begin(), input.end(), delimiter, ' ');
+    std::istringstream iss(input);
+    std::vector<T> tokens;
+    for (T token; iss >> token;) {
+        tokens.push_back(token);
+    }
+    return tokens;
+}
+
+template <typename T>
+std::vector<T> split(std::string input, const std::string& delimiters) {
+    for (const auto& delimiter : delimiters) {
+        std::ranges::replace(input.begin(), input.end(), delimiter, ' ');
+    }
+    std::istringstream iss(input);
+    std::vector<T> tokens;
+    for (T token; iss >> token;) {
+        tokens.push_back(token);
+    }
+    return tokens;
+}
 #endif //HELPERS_H
