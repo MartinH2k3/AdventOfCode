@@ -2,6 +2,8 @@
 #define HELPERS_H
 #include <compare>
 #include <map>
+#include <ranges>
+#include <vector>
 
 struct Point {
     int x;
@@ -115,7 +117,7 @@ inline std::ostream& operator<<(std::ostream& os, const Direction dir) {
 
 inline std::vector<Point> Point::neighbors(const int width, const int height) const {
     std::vector<Point> neighbors;
-    for (const auto& dir : directions | std::views::values) {
+    for (const auto& [_, dir] : directions) {
         if (Point neighbor = *this + dir;
             neighbor.within(width, height)) {
             neighbors.push_back(neighbor);
