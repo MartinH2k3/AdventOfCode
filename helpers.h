@@ -8,6 +8,8 @@
 struct Point {
     int x;
     int y;
+    Point() : x(0), y(0) {}
+    Point(int x, int y) : x(x), y(y) {}
     Point operator+(const Point& other) const {
         return {x + other.x, y + other.y};
     }
@@ -38,7 +40,10 @@ struct Point {
     bool within(const int width, const int height) const {
         return x >= 0 && x < width && y >= 0 && y < height;
     }
-    std::vector<Point> neighbors(int width, int height) const;
+    bool within(const size_t width, const size_t height) const {
+        return x < width && y < height;
+    }
+    std::vector<Point> neighbors(size_t width, size_t height) const;
 };
 inline std::ostream& operator<<(std::ostream& os, const Point& p) {
     os << "(" << p.x << ", " << p.y << ")";
@@ -115,7 +120,7 @@ inline std::ostream& operator<<(std::ostream& os, const Direction dir) {
     return os;
 }
 
-inline std::vector<Point> Point::neighbors(const int width, const int height) const {
+inline std::vector<Point> Point::neighbors(const size_t width, const size_t height) const {
     std::vector<Point> neighbors;
     for (const auto& [_, dir] : directions) {
         if (Point neighbor = *this + dir;
@@ -161,4 +166,105 @@ std::vector<T> split(std::string input, const std::string& delimiters) {
     }
     return tokens;
 }
+
+class Bitmap{
+private:
+    size_t length; // using word length instead of size, so that we can use size() method
+    std::vector<size_t> data;
+
+    class BitReference {
+    private:
+        size_t& word;     // Reference to the 64-bit word in the data
+        size_t bitIndex;  // Index of the bit within the word
+
+    public:
+        BitReference(size_t& word, size_t bitIndex)
+                : word(word), bitIndex(bitIndex) {}
+
+        // Implicit conversion to bool for reading
+        operator bool() const {
+            return word & (1ULL << bitIndex);
+        }
+
+        // Assignment for writing
+        BitReference& operator=(bool value) {
+            if (value) {
+                word |= (1ULL << bitIndex); // Set the bit
+            } else {
+                word &= ~(1ULL << bitIndex); // Clear the bit
+            }
+            return *this;
+        }
+    };
+public:
+    Bitmap() = default;
+    explicit Bitmap(size_t size){
+        data = std::vector<size_t>(size/64 + (size%64 > 0), 0);
+        this->length = size;
+    }
+    Bitmap(std::vector<bool> bitmap){
+        data = std::vector<size_t>(bitmap.size()/64 + (bitmap.size()%64 > 0), 0);
+        for (size_t i = 0; i < bitmap.size(); i++){
+            if (bitmap[i]){
+                data[i/64] |= 1 << (i%64);
+            }
+        }
+        length = bitmap.size();
+    }
+    // Assignable operator[]
+    BitReference operator[](size_t index) {
+        return BitReference(data[index / 64], index % 64);
+    }
+
+    // Const operator[] for read-only access
+    bool operator[](size_t index) const {
+        return data[index / 64] & (1ULL << (index % 64));
+    }
+    Bitmap& operator++(){
+        for (size_t i = 0; i < data.size(); i++){
+            if (data[i] == SIZE_T_MAX){
+                data[i] = 0;
+            } else {
+                data[i]++;
+                break;
+            }
+        }
+        return *this;
+    }
+    operator std::vector<bool>() const {
+        std::vector<bool> bitmap;
+        for (size_t i = 0; i < data.size(); i++){
+            for (size_t j = 0; j < 64; j++){
+                bitmap.push_back(data[i] & (1 << j));
+            }
+        }
+        return bitmap;
+    }
+
+    size_t true_count(){
+        size_t count = 0;
+        for (size_t i = 0; i < data.size(); i++){
+            count += __builtin_popcountll(data[i]);
+        }
+        return count;
+    }
+
+    size_t size() const{
+        return length;
+    }
+    bool is_overflown(){
+        return data[length / 64] & (1 << (length % 64));
+    }
+};
+
+std::string to_binary_string(int64_t number){
+    std::string output;
+    while (number){
+        output.push_back((number&1) + '0');
+        number >>= 1;
+    }
+    std::reverse(output.begin(), output.end());
+    return output;
+}
+
 #endif //HELPERS_H
