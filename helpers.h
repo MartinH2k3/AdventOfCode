@@ -222,7 +222,7 @@ public:
     }
     Bitmap& operator++(){
         for (size_t i = 0; i < data.size(); i++){
-            if (data[i] == SIZE_T_MAX){
+            if (data[i] == SIZE_MAX){
                 data[i] = 0;
             } else {
                 data[i]++;
